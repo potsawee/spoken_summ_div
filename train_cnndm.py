@@ -9,14 +9,14 @@ import random
 from datetime import datetime
 from collections import OrderedDict
 
-from data_meeting import TopicSegment, Utterance, bert_tokenizer, DA_MAPPING
+from data.meeting import TopicSegment, Utterance, bert_tokenizer, DA_MAPPING
 from data import cnndm
 from data.cnndm import ProcessedDocument, ProcessedSummary
 from models.hierarchical_rnn import EncoderDecoder
 from models.neural import LabelSmoothingLoss
 from train_ami import diverisity_loss
 
-CNNDM_DATA_PATH = "lib/model_data/cnndm-191216.{}.pk.bin".format(data_type)
+CNNDM_DATA_PATH = "lib/model_data/cnndm-191216.{}.pk.bin"
 
 def train_cnndm():
     print("Start training hierarchical RNN model")
@@ -440,7 +440,8 @@ def load_cnndm_data(args, data_type, dump=False):
         for x, y in zip(articles, abstracts):
             cnndm_data.append((x,y,y))
     else:
-        with open(CNNDM_DATA_PATH, 'rb') as f:
+        with open(CNNDM_DATA_PATH.format(data_type), 'rb') as f:
+            import pdb; pdb.set_trace()
             cnndm_data = pickle.load(f, encoding="bytes")
 
     return cnndm_data

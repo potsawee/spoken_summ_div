@@ -9,13 +9,13 @@ import random
 from datetime import datetime
 from collections import OrderedDict
 
-from data_meeting import TopicSegment, Utterance, bert_tokenizer, DA_MAPPING
+from data.meeting import TopicSegment, Utterance, bert_tokenizer, DA_MAPPING
 from data import cnndm
 from data.cnndm import ProcessedDocument, ProcessedSummary
 from models.hierarchical_rnn import EncoderDecoder, DALabeller, EXTLabeller
 from models.neural import LabelSmoothingLoss
 
-AMI_DATA_PATH = "lib/model_data/ami-191209.{}.pk.bin".format(data_type)
+AMI_DATA_PATH = "lib/model_data/ami-191209.{}.pk.bin"
 
 def train():
     print("Start training hierarchical RNN model")
@@ -84,8 +84,8 @@ def train():
     valid_data = load_ami_data('valid')
     # make the training data 100
     random.shuffle(valid_data)
-    train_data.extend(valid_data[:6])
-    valid_data = valid_data[6:]
+    train_data.extend(valid_data[:3])
+    valid_data = valid_data[3:]
 
     model = EncoderDecoder(args, device=device)
     print(model)
@@ -541,7 +541,7 @@ def get_a_batch(ami_data, idx, batch_size, num_utterances, num_words, summary_le
     return input, utt_lengths, word_lengths, summary, summary_lengths, topic_boundary_label, dialogue_acts, extractive_label
 
 def load_ami_data(data_type):
-    with open(AMI_DATA_PATH, 'rb') as f:
+    with open(AMI_DATA_PATH.format(data_type), 'rb') as f:
         ami_data = pickle.load(f, encoding="bytes")
     return ami_data
 
