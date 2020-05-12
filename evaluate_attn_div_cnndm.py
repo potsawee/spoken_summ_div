@@ -11,7 +11,7 @@ from datetime import datetime
 from collections import OrderedDict
 from tqdm import tqdm
 
-from data_meeting import TopicSegment, Utterance, bert_tokenizer
+from data.meeting import TopicSegment, Utterance, bert_tokenizer
 from data import cnndm
 from data.cnndm import ProcessedDocument, ProcessedSummary
 from models.hierarchical_rnn import EncoderDecoder

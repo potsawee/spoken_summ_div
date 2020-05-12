@@ -9,7 +9,7 @@ import random
 from datetime import datetime
 from collections import OrderedDict
 
-from data_meeting import TopicSegment, Utterance, bert_tokenizer, DA_MAPPING
+from data.meeting import TopicSegment, Utterance, bert_tokenizer, DA_MAPPING
 from data import cnndm
 from data.cnndm import ProcessedDocument, ProcessedSummary
 from models.hierarchical_rnn import EncoderDecoder, DALabeller, EXTLabeller

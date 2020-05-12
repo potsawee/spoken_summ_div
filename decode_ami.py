@@ -10,7 +10,7 @@ from datetime import datetime
 
 from models.hierarchical_rnn import EncoderDecoder
 from train_ami import get_a_batch
-from data_meeting import TopicSegment, Utterance, bert_tokenizer
+from data.meeting import TopicSegment, Utterance, bert_tokenizer
 
 if torch.__version__ == '1.2.0': KEYPADMASK_DTYPE = torch.bool
 else:
