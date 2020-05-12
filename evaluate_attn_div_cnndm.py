@@ -26,8 +26,8 @@ START_TOKEN_ID = bert_tokenizer.convert_tokens_to_ids(START_TOKEN)
 SEP_TOKEN_ID   = bert_tokenizer.convert_tokens_to_ids(SEP_TOKEN)
 STOP_TOKEN_ID  = bert_tokenizer.convert_tokens_to_ids(STOP_TOKEN)
 
-decoding_method = 'teacherfv2'
-attn_score_path = "/home/alta/summary/pm574/summariser1/lib/attn_scores_u/HGRUV5_CNNDM/{}/".format(decoding_method)
+decoding_method = 'teacherforcing'
+attn_score_path = "lib/attn_scores_u/HGRUV5_CNNDM/{}/".format(decoding_method)
 
 def evaluate_attn_div(start_idx, end_idx):
     print("Start training hierarchical RNN model")
@@ -51,10 +51,8 @@ def evaluate_attn_div(start_idx, end_idx):
     args['label_smoothing'] = 0.1
     args['memory_utt'] = False
 
-    args['model_save_dir'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/"
-    args['load_model'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/model-HGRUV5_CNNDM_FEB26A-ep17-bn0.pt" # add .pt later
-    # args['load_model'] = None
-    args['model_name'] = 'HGRUV5_CNNDM_APR1'
+    args['model_save_dir'] = "lib/trained_models/"
+    args['load_model'] = "lib/trained_models2/MODEL_CNNDM0.pt" # add .pt later
     # ---------------------------------------------------------------------------------- #
     # print_config(args)
 
@@ -350,7 +348,7 @@ def get_a_batch(ami_data, idx, batch_size, num_utterances, num_words, summary_le
     return input, utt_lengths, word_lengths, summary, summary_lengths
 
 def load_ami_data(data_type):
-    path = "/home/alta/summary/pm574/summariser1/lib/model_data/ami-191209.{}.pk.bin".format(data_type)
+    path = "lib/model_data/ami-191209.{}.pk.bin".format(data_type)
     with open(path, 'rb') as f:
         ami_data = pickle.load(f, encoding="bytes")
     return ami_data
@@ -390,7 +388,7 @@ def load_cnndm_data(args, data_type, dump=False):
         for x, y in zip(articles, abstracts):
             cnndm_data.append((x,y,y))
     else:
-        path = "/home/alta/summary/pm574/summariser1/lib/model_data/cnndm-191216.{}.pk.bin".format(data_type)
+        path = "lib/model_data/cnndm-191216.{}.pk.bin".format(data_type)
         with open(path, 'rb') as f:
             cnndm_data = pickle.load(f, encoding="bytes")
 

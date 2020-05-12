@@ -16,6 +16,8 @@ from models.hierarchical_rnn import EncoderDecoder
 from models.neural import LabelSmoothingLoss
 from train_ami import diverisity_loss
 
+CNNDM_DATA_PATH = "lib/model_data/cnndm-191216.{}.pk.bin".format(data_type)
+
 def train_cnndm():
     print("Start training hierarchical RNN model")
     # ---------------------------------------------------------------------------------- #
@@ -49,11 +51,10 @@ def train_cnndm():
     args['a_div'] = 1.0
     args['memory_utt'] = False
 
-    args['model_save_dir'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/"
-    args['load_model'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/model-HGRUV5_CNNDM_FEB26A-ep17-bn0.pt" # add .pt later
-
-    # args['load_model'] = None
-    args['model_name'] = 'HGRUV5_CNNDMDIV_APR14A'
+    args['model_save_dir'] = "lib/trained_models/"
+    # args['load_model'] = "lib/trained_models/MODEL_CNNDM0.pt"
+    args['load_model'] = None
+    args['model_name'] = 'MODEL_CNNDM1'
     # ---------------------------------------------------------------------------------- #
     print_config(args)
 
@@ -213,7 +214,6 @@ def train_cnndm():
                 training_step += args['batch_size']*args['update_nbatches']
 
             if bn % 2 == 0:
-                # print("[{}] batch {}/{}: loss = {:5f}".format(str(datetime.now()), bn, num_batches, loss))
                 print("[{}] batch {}/{}: loss = {:.5f} | loss_div = {:.5f}".
                     format(str(datetime.now()), bn, num_batches, loss, loss_div))
                 sys.stdout.flush()
@@ -404,11 +404,6 @@ def get_a_batch(ami_data, idx, batch_size, num_utterances, num_words, summary_le
 
     return input, utt_lengths, word_lengths, summary, summary_lengths
 
-def load_ami_data(data_type):
-    path = "/home/alta/summary/pm574/summariser1/lib/model_data/ami-191209.{}.pk.bin".format(data_type)
-    with open(path, 'rb') as f:
-        ami_data = pickle.load(f, encoding="bytes")
-    return ami_data
 
 def load_cnndm_data(args, data_type, dump=False):
     if dump:
@@ -445,8 +440,7 @@ def load_cnndm_data(args, data_type, dump=False):
         for x, y in zip(articles, abstracts):
             cnndm_data.append((x,y,y))
     else:
-        path = "/home/alta/summary/pm574/summariser1/lib/model_data/cnndm-191216.{}.pk.bin".format(data_type)
-        with open(path, 'rb') as f:
+        with open(CNNDM_DATA_PATH, 'rb') as f:
             cnndm_data = pickle.load(f, encoding="bytes")
 
     return cnndm_data

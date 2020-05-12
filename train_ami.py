@@ -15,6 +15,8 @@ from data.cnndm import ProcessedDocument, ProcessedSummary
 from models.hierarchical_rnn import EncoderDecoder, DALabeller, EXTLabeller
 from models.neural import LabelSmoothingLoss
 
+AMI_DATA_PATH = "lib/model_data/ami-191209.{}.pk.bin".format(data_type)
+
 def train():
     print("Start training hierarchical RNN model")
     # ---------------------------------------------------------------------------------- #
@@ -48,17 +50,14 @@ def train():
 
     args['a_da']  = 0.2
     args['a_ext'] = 0.2
-    args['a_cov'] = 0.0
     args['a_div'] = 1.0
 
     args['memory_utt'] = False
 
-    args['model_save_dir'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/"
-    args['load_model'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/model-HGRUV5_CNNDM_FEB26A-ep12-bn0" # add .pt later
-    # args['load_model'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/model-HGRUV5_FEB28A-ep6"
-    # args['load_model'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/model-HGRUV5MEM_APR8A-ep1"
-    # args['load_model'] = None
-    args['model_name'] = 'HGRUV5_APR16H9'
+    args['model_save_dir'] = "lib/trained_models/"
+    # args['load_model'] = "lib/trained_models/MODEL_0" # add .pt later
+    args['load_model'] = None
+    args['model_name'] = 'MODEL_1'
     # ---------------------------------------------------------------------------------- #
     print_config(args)
 
@@ -134,14 +133,6 @@ def train():
     da_criterion = nn.NLLLoss(reduction='none')
     ext_criterion = nn.BCELoss(reduction='none')
 
-    # ONLY train the momory part #
-    # for name, param in model.named_parameters():
-    #     if "utt" in name:
-    #         pass
-    #     else:
-    #         param.requires_grad = False
-    # optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),lr=args['lr'],betas=(0.9,0.999),eps=1e-08,weight_decay=0)
-    # -------------------------- #
 
     optimizer = optim.Adam(model.parameters(),lr=args['lr'],betas=(0.9,0.999),eps=1e-08,weight_decay=0)
     optimizer.zero_grad()
@@ -190,9 +181,6 @@ def train():
             loss = criterion(decoder_output.view(-1, args['vocab_size']), decoder_target)
             loss = (loss * decoder_mask).sum() / decoder_mask.sum()
 
-            # COVLOSS:
-            # loss_cov = compute_covloss(attn_scores, cov_scores)
-            # loss_cov = (loss_cov.view(-1) * decoder_mask).sum() / decoder_mask.sum()
 
             # Diversity Loss (4):
             intra_div, inter_div = diverisity_loss(u_attn_scores, decoder_target, u_len, tgt_len)
@@ -213,13 +201,9 @@ def train():
             loss_ext = ext_criterion(ext_output, extractive_label)
             loss_ext = (loss_ext * loss_utt_mask).sum() / loss_utt_mask.sum()
 
-            # total_loss = loss + args['a_da']*loss_da + args['a_ext']*loss_ext + args['a_cov']*loss_cov
             total_loss = loss + args['a_da']*loss_da + args['a_ext']*loss_ext + args['a_div']*loss_div
-            # total_loss = loss + args['a_da']*loss_da + args['a_ext']*loss_ext
-            # total_loss = loss + args['a_div']*loss_div
 
             total_loss.backward()
-            # loss.backward()
 
             idx += BATCH_SIZE
 
@@ -245,11 +229,6 @@ def train():
             if bn % 1 == 0:
                 print("[{}] batch {}/{}: loss = {:.5f} | loss_div = {:.5f} | loss_da = {:.5f} | loss_ext = {:.5f}".
                     format(str(datetime.now()), bn, num_batches, loss, loss_div, loss_da, loss_ext))
-                # print("[{}] batch {}/{}: loss = {:.5f} | loss_da = {:.5f} | loss_ext = {:.5f}".
-                #     format(str(datetime.now()), bn, num_batches, loss, loss_da, loss_ext))
-                # print("[{}] batch {}/{}: loss = {:.5f} | loss_div = {:.5f}".
-                    # format(str(datetime.now()), bn, num_batches, loss, loss_div))
-                # print("[{}] batch {}/{}: loss = {:.5f}".format(str(datetime.now()), bn, num_batches, loss))
                 sys.stdout.flush()
 
             if bn % 10 == 0:
@@ -271,7 +250,6 @@ def train():
 
                 with torch.no_grad():
                     avg_val_loss = evaluate(model, valid_data, VAL_BATCH_SIZE, args, device, use_rouge=True)
-                    # avg_val_loss = evaluate_greedy(model, valid_data, VAL_BATCH_SIZE, args, device)
 
                 print("avg_val_loss_per_token = {}".format(avg_val_loss))
 
@@ -375,12 +353,6 @@ def diverisity_loss(u_attn_scores, dec_target, enc_len, dec_len):
 
     return intra_sent_div, inter_sent_div
 
-def compute_covloss(attn_scores, cov_scores):
-    x = (attn_scores < cov_scores).float()
-    y = 1.0 - x
-    loss_cov = (x*attn_scores + y*cov_scores).sum(dim=-1)
-    return loss_cov
-
 def length2mask(length, batch_size, max_len, device):
     mask = torch.zeros((batch_size, max_len), dtype=torch.float)
     for bn in range(batch_size):
@@ -457,79 +429,6 @@ def evaluate(model, eval_data, eval_batch_size, args, device, use_rouge=False):
         except ValueError:
             return 0
 
-def evaluate_greedy(model, eval_data, eval_batch_size, args, device):
-    num_eval_epochs = int(len(eval_data)/eval_batch_size)
-
-    print("num_eval_epochs = {}".format(num_eval_epochs))
-    eval_idx = 0
-
-    from rouge import Rouge
-    rouge = Rouge()
-    bert_decoded_outputs = []
-    bert_decoded_targets = []
-
-    for bn in range(num_eval_epochs):
-
-        input, u_len, w_len, target, tgt_len, _, _, _ = get_a_batch(
-                eval_data, eval_idx, eval_batch_size,
-                args['num_utterances'], args['num_words'],
-                args['summary_length'], args['summary_type'], device)
-
-        # decoder target
-        decoder_target, decoder_mask = shift_decoder_target(target, tgt_len, device)
-        decoder_target = decoder_target.view(-1)
-
-        enc_output_dict = model.encoder(input, u_len, w_len) # memory
-        u_output = enc_output_dict['u_output']
-
-        # forward-pass DECODER
-        xt = torch.zeros((eval_batch_size, 1), dtype=torch.int64).to(device)
-        xt.fill_(101) # 101
-
-        # initial hidden state
-        ht = torch.zeros((model.decoder.num_layers, eval_batch_size, model.decoder.dec_hidden_size),
-                                    dtype=torch.float).to(device)
-        for bi, l in enumerate(u_len): ht[:,bi,:] = u_output[bi,l-1,:].unsqueeze(0)
-
-        decoded_words = [103 for _ in range(args['summary_length'])]
-
-        for t in range(args['summary_length']-1):
-            decoder_output, ht, _ = model.decoder.forward_step(xt, ht, enc_output_dict, logsoftmax=True)
-            next_word = decoder_output.argmax().item()
-            xt.fill_(next_word)
-            decoded_words[t] = next_word
-
-        bert_decoded_output = bert_tokenizer.decode(decoded_words)
-        stop_idx = bert_decoded_output.find('[MASK]')
-        bert_decoded_output = bert_decoded_output[:stop_idx]
-        bert_decoded_output = bert_decoded_output.replace('[SEP] ', '')
-        bert_decoded_outputs.append(bert_decoded_output)
-
-        bert_decoded_target = bert_tokenizer.decode(decoder_target.cpu().numpy())
-        stop_idx2 = bert_decoded_target.find('[MASK]')
-        bert_decoded_target = bert_decoded_target[:stop_idx2]
-        bert_decoded_target = bert_decoded_target.replace('[SEP] ', '')
-        bert_decoded_targets.append(bert_decoded_target)
-
-        eval_idx += eval_batch_size
-
-        print("#", end="")
-        sys.stdout.flush()
-
-    print()
-
-    try:
-        scores = rouge.get_scores(bert_decoded_outputs, bert_decoded_targets, avg=True)
-        print("--------------------------------------------------")
-        print("ROUGE-1 = {:.2f}".format(scores['rouge-1']['f']*100))
-        print("ROUGE-2 = {:.2f}".format(scores['rouge-2']['f']*100))
-        print("ROUGE-L = {:.2f}".format(scores['rouge-l']['f']*100))
-        print("--------------------------------------------------")
-
-        return (scores['rouge-1']['f'] + scores['rouge-2']['f'] + scores['rouge-l']['f'])*(-100)/3
-    except ValueError:
-        print("cannot compute ROUGE score")
-        return 0
 
 def adjust_lr(optimizer, lr0, decay_rate, step):
     """to adjust the learning rate for both encoder & decoder --- DECAY"""
@@ -642,51 +541,10 @@ def get_a_batch(ami_data, idx, batch_size, num_utterances, num_words, summary_le
     return input, utt_lengths, word_lengths, summary, summary_lengths, topic_boundary_label, dialogue_acts, extractive_label
 
 def load_ami_data(data_type):
-    path = "/home/alta/summary/pm574/summariser1/lib/model_data/ami-191209.{}.pk.bin".format(data_type)
-    with open(path, 'rb') as f:
+    with open(AMI_DATA_PATH, 'rb') as f:
         ami_data = pickle.load(f, encoding="bytes")
     return ami_data
 
-def load_cnndm_data(args, data_type, dump=False):
-    if dump:
-        data    = cnndm.load_data(args, data_type)
-        summary = cnndm.load_summary(args, data_type)
-        articles = []
-        for encoded_words in data['encoded_articles']:
-            # encoded_sentences = []
-            article = TopicSegment()
-            l = len(encoded_words) - 1
-            for i, x in enumerate(encoded_words):
-                if x == 101: # CLS
-                    sentence = []
-                elif x == 102: # SEP
-                    utt = Utterance(sentence, -1, -1, -1)
-                    article.add_utterance(utt)
-                elif x == 100: # UNK
-                    break
-                else:
-                    sentence.append(x)
-                    if i == l:
-                        utt = Utterance(sentence, -1, -1, -1)
-                        article.add_utterance(utt)
-            articles.append([article])
-        abstracts = []
-        for encoded_abstract in summary['encoded_abstracts']:
-            if 103 in encoded_abstract:
-                last_idx = encoded_abstract.index(103)
-                encoded_abstract = encoded_abstract[:last_idx]
-            encoded_abstract.append(102)
-            encoded_abstract.append(103)
-            abstracts.append(encoded_abstract)
-        cnndm_data = []
-        for x, y in zip(articles, abstracts):
-            cnndm_data.append((x,y,y))
-    else:
-        path = "/home/alta/summary/pm574/summariser1/lib/model_data/cnndm-191216.{}.pk.bin".format(data_type)
-        with open(path, 'rb') as f:
-            cnndm_data = pickle.load(f, encoding="bytes")
-
-    return cnndm_data
 
 def print_config(args):
     print("============================= CONFIGURATION =============================")

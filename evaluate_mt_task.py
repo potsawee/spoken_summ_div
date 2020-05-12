@@ -36,8 +36,8 @@ def evaluate_label_task(model_name, epoch, multitask):
     args['batch_size']  = 2
     args['random_seed'] = 444
 
-    args['model_save_dir'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/"
-    args['load_model'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/model-{}-ep{}.pt".format(model_name, epoch)
+    args['model_save_dir'] = "lib/trained_models/"
+    args['load_model'] = "lib/trained_models/model-{}-ep{}.pt".format(model_name, epoch)
     # ---------------------------------------------------------------------------------- #
 
     if args['use_gpu']:
@@ -181,7 +181,7 @@ def labelling_eval(output, label, mask, threshold):
     return tp, tn, fp ,fn
 
 def main():
-    model_names = ["HGRUV5_APR17MTD12"]
+    model_names = ["MODEL_1"]
     multitask   = True
     epoch = 0
     for model_name in model_names:

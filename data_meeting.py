@@ -156,15 +156,15 @@ def rouge_reference(dir_in, dir_out, style, sumtype):
             idx += 1
 
 def rouge_reference_go():
-    dir_in = "/home/alta/summary/pm574/data/amicorpus/summary_work/v-191203"
-    dir_out = "/home/alta/summary/pm574/summariser1/out_summary/reference/valid/long"
+    dir_in = "data/amicorpus/summary_work/v-191203"
+    dir_out = "out_summary/reference/valid/long"
     style = 'manual'
     sumtype = 'long'
     rouge_reference(dir_in, dir_out, style, sumtype)
 
 def main():
-    ami_dir = "/home/alta/summary/pm574/data/amicorpus/summary_work/v-200214-asr"
-    train_data = get_ami_data(ami_dir, data_type='train', style='asr') # len = 94
+    ami_dir = "data/amicorpus/summary_work/v-200214-asr"
+    train_data = get_ami_data(ami_dir, data_type='train', style='asr') # len = 97
     valid_data = get_ami_data(ami_dir, data_type='valid', style='asr') # len = 20
     test_data  = get_ami_data(ami_dir, data_type='test',  style='asr') # len = 20
 

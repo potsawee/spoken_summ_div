@@ -123,13 +123,13 @@ def decode(start_idx, end_idx):
     args['num_layers_enc'] = 2
     args['num_layers_dec'] = 1
 
-    args['model_save_dir'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/"
-    args['model_data_dir'] = "/home/alta/summary/pm574/summariser1/lib/model_data/"
+    args['model_save_dir'] = "lib/trained_models/"
+    args['model_data_dir'] = "lib/model_data/"
 
     args['memory_utt'] = False
 
-    args['model_name']  = "HGRUV5_CNNDMDIV_APR14A" # HGRUV5_CNNDM_FEB26A | HGRUV5_CNNDMDIV_APR14A
-    args['model_epoch'] = '02'
+    args['model_name']  = "MODEL_CNNDM0"
+    args['model_epoch'] = 0
     load_option         = 2 # 1=old / 2=new
     # ---------------------------------------------------------------------------------- #
     start_idx   = start_idx
@@ -142,7 +142,7 @@ def decode(start_idx, end_idx):
     penalty_ug  = 5.0
     # ---------------------------------------------------------------------------------- #
     args['summary_out_dir'] = \
-    '/home/alta/summary/pm574/summariser1/out_summary_cnndm/{}-ep{}-len{}/width{}-{}-alpha{}-penalty{}/' \
+        'out_summary_cnndm/{}-ep{}-len{}/width{}-{}-alpha{}-penalty{}/' \
         .format(args['model_name'], args['model_epoch'], args['summary_length'],
                 beam_width, search_method, alpha, penalty_ug)
     # ---------------------------------------------------------------------------------- #
@@ -224,11 +224,3 @@ if __name__ == "__main__":
     else:
         print("Usage: python decode.py start_idx")
         raise Exception("argv error")
-
-"""
-To run on the air stack (cpu)
-
-qsub -cwd -j yes -P esol -l qp=low -o LOGs/run-array-cnndm.txt -t 1-115 submit/run-array-job.sh
-/home/alta/summary/pm574/summariser1/temp/decode_list115.txt
-/home/alta/summary/pm574/summariser1/submit/decode1_cnndm_cpu.sh SET
-"""

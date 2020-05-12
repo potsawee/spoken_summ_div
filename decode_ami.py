@@ -134,7 +134,7 @@ def tgtids2summary(tgt_ids):
     return summary
 
 def load_ami_data(fversion, data_type):
-    path = "/home/alta/summary/pm574/summariser1/lib/model_data/ami-{}.{}.pk.bin".format(fversion, data_type)
+    path = "lib/model_data/ami-{}.{}.pk.bin".format(fversion, data_type)
     with open(path, 'rb') as f:
         ami_data = pickle.load(f, encoding="bytes")
     return ami_data
@@ -155,12 +155,12 @@ def decode(start_idx):
     args['num_layers_enc'] = 2
     args['num_layers_dec'] = 1
 
-    args['model_save_dir'] = "/home/alta/summary/pm574/summariser1/lib/trained_models2/"
-    args['model_data_dir'] = "/home/alta/summary/pm574/summariser1/lib/model_data/"
+    args['model_save_dir'] = "lib/trained_models/"
+    args['model_data_dir'] = "lib/model_data/"
 
     args['memory_utt']  = False
-    args['model_name']  = "HGRUV5_APR16H9"
-    args['model_epoch'] = 0 # 0=current | 999=best
+    args['model_name']  = "MODEL_1"
+    args['model_epoch'] = 0
 
     # ---------------------------------------------------------------------------------- #
     load_option         = 2 # 1=old | 2=new
@@ -184,12 +184,12 @@ def decode(start_idx):
     if args['decode_method'] == 'beamsearch':
         if 'asr' not in testfile:
             args['summary_out_dir'] = \
-            '/home/alta/summary/pm574/summariser1/out_summary2/model-{}-ep{}-len{}/{}-width{}-{}-alpha{}-penalty{}/' \
+            'out_summary/model-{}-ep{}-len{}/{}-width{}-{}-alpha{}-penalty{}/' \
                 .format(args['model_name'], args['model_epoch'], args['summary_length'],
                         datatype, beam_width, search_method, alpha, penalty_ug)
         else:
             args['summary_out_dir'] = \
-            '/home/alta/summary/pm574/summariser1/out_summary2/model-{}-ep{}-len{}/{}/{}-width{}-{}-alpha{}-penalty{}/' \
+            'out_summary/model-{}-ep{}-len{}/{}/{}-width{}-{}-alpha{}-penalty{}/' \
                 .format(args['model_name'], args['model_epoch'], args['summary_length'],
                         testfile, datatype, beam_width, search_method, alpha, penalty_ug)
     # ---------------------------------------------------------------------------------- #
@@ -280,11 +280,11 @@ def decode(start_idx):
         else:
             if 'asr' not in testfile:
                 args['summary_out_dir'] = \
-                '/home/alta/summary/pm574/summariser1/out_summary2/model-{}-ep{}-len{}/{}-teacherf/' \
+                'out_summary/model-{}-ep{}-len{}/{}-teacherf/' \
                     .format(args['model_name'], args['model_epoch'], args['summary_length'], datatype)
             else:
                 args['summary_out_dir'] = \
-                '/home/alta/summary/pm574/summariser1/out_summary2/model-{}-ep{}-len{}/{}/{}-teacherf/' \
+                'out_summary/model-{}-ep{}-len{}/{}/{}-teacherf/' \
                     .format(args['model_name'], args['model_epoch'], args['summary_length'], testfile, datatype)
             print("Teaching Forcing Decoding!")
             decoding_teacher_forcing(model, test_data, args, start_idx, batch_size, num_batches)
